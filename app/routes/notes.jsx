@@ -3,7 +3,6 @@ import { Link, useCatch, useLoaderData } from '@remix-run/react';
 
 import NewNote, { links as newNoteLinks } from '~/components/NewNote';
 import NoteList, { links as noteListLinks } from '~/components/NoteList';
-import { getStoredNotes, storeNotes } from '~/data/notes';
 
 export default function NotesPage() {
   const notes = useLoaderData();
@@ -16,8 +15,10 @@ export default function NotesPage() {
   );
 }
 
+let inMemoryNotes = {"notes":[{"title":"New Notes","content":"A new note!","id":"2022-10-19T11:10:56.831Z"},{"title":"Remix is awesome!","content":"It really is!","id":"2022-10-19T11:16:55.247Z"}]};
+
 export async function loader() {
-  const notes = await getStoredNotes();
+  const notes = inMemoryNotes.notes;
   if (!notes || notes.length === 0) {
     throw json(
       { message: 'Could not find any notes.' },
@@ -30,6 +31,8 @@ export async function loader() {
   return notes;
 }
 
+
+
 export async function action({ request }) {
   const formData = await request.formData();
   const noteData = Object.fromEntries(formData);
@@ -38,11 +41,8 @@ export async function action({ request }) {
     return { message: 'Invalid title - must be at least 5 characters long.' };
   }
 
-  const existingNotes = await getStoredNotes();
   noteData.id = new Date().toISOString();
-  const updatedNotes = existingNotes.concat(noteData);
-  await storeNotes(updatedNotes);
-  // await new Promise((resolve, reject) => setTimeout(() => resolve(), 2000));
+  inMemoryNotes.notes.push(noteData);
   return redirect('/notes');
 }
 
